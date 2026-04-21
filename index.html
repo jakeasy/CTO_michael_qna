@@ -72,6 +72,7 @@
   .title-wrap {
     display: flex;
     flex-direction: column;
+    transition: opacity 0.5s ease;
   }
   .counter {
     font-family: 'JetBrains Mono', monospace;
@@ -79,11 +80,43 @@
     color: rgba(255,255,255,0.6);
     white-space: nowrap;
     padding-bottom: 8px;
+    transition: opacity 0.5s ease;
   }
   .counter strong {
     color: #fff;
     font-size: 24px;
     font-weight: 700;
+  }
+
+  /* Welcome (pre-start) title */
+  .welcome-title {
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, #a5b4fc 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-style: italic;
+  }
+  .welcome-sub {
+    font-size: 12px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 10px;
+  }
+
+  /* State transitions */
+  .fade-in {
+    animation: fadeIn 0.6s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
   main {
@@ -424,30 +457,28 @@
     .title .cross { font-size: 22px; }
     .title .qa { font-size: 24px; }
     .title-sub { font-size: 10px; letter-spacing: 0.25em; }
+    .welcome-title { font-size: 36px; }
   }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="title-wrap">
-    <div class="title">
-      <span>마이클 CTO</span>
-      <span class="cross">×</span>
-      <span>PM 그룹</span>
-      <span class="qa">Q&amp;A</span>
-    </div>
-    <div class="title-sub">Welcome Back · April 2026</div>
+<header id="header">
+  <div class="title-wrap" id="title-wrap">
+    <div class="welcome-title">Welcome.</div>
+    <div class="welcome-sub">A Special Gathering · April 2026</div>
   </div>
-  <div class="counter"><strong id="counter-done">0</strong> / <span id="counter-total">19</span></div>
+  <div class="counter" id="counter" style="opacity: 0; pointer-events: none;">
+    <strong id="counter-done">0</strong> / <span id="counter-total">19</span>
+  </div>
 </header>
 
 <main>
   <div class="stage" id="stage">
     <!-- Start screen -->
     <div class="start-screen" id="start-screen">
-      <h1>총 <span class="accent">19개</span>의 질문이<br>당신을 기다리고 있습니다.</h1>
-      <p>PM그룹원들이 익명으로 보낸 질문이 랜덤으로 한 개씩 등장합니다.<br>답변을 마치시면 '다음 질문' 버튼을 눌러주세요.</p>
+      <h1>CTO 마이클님의 귀환을<br><span class="accent">진심으로 환영합니다.</span></h1>
+      <p>PM그룹원 19명이 익명으로 보낸 질문이 준비되어 있습니다.<br>아래 버튼을 눌러 시작해주세요.</p>
       <button class="btn-primary btn-start" onclick="start()">시작하기 →</button>
     </div>
   </div>
@@ -485,6 +516,8 @@ const QUESTIONS = [
 ];
 
 const stage = document.getElementById('stage');
+const titleWrap = document.getElementById('title-wrap');
+const counter = document.getElementById('counter');
 const counterDone = document.getElementById('counter-done');
 const counterTotal = document.getElementById('counter-total');
 counterTotal.textContent = QUESTIONS.length;
@@ -493,11 +526,34 @@ let pool = [];
 let doneIds = [];
 let currentQuestion = null;
 let rolling = false;
+let started = false;
+
+function revealMainTitle() {
+  if (started) return;
+  started = true;
+  // Fade out welcome
+  titleWrap.style.opacity = '0';
+  setTimeout(() => {
+    titleWrap.innerHTML = `
+      <div class="title">
+        <span>마이클 CTO</span>
+        <span class="cross">×</span>
+        <span>PM 그룹</span>
+        <span class="qa">Q&amp;A</span>
+      </div>
+      <div class="title-sub">Welcome Back · April 2026</div>
+    `;
+    titleWrap.classList.add('fade-in');
+    titleWrap.style.opacity = '1';
+    counter.style.opacity = '1';
+  }, 400);
+}
 
 function start() {
   pool = [...QUESTIONS];
   doneIds = [];
   counterDone.textContent = 0;
+  revealMainTitle();
   pickNext();
 }
 
