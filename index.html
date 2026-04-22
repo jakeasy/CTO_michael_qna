@@ -159,6 +159,108 @@
     max-width: 560px;
     line-height: 1.7;
   }
+  .start-actions {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Preview — all questions at once */
+  .preview-wrap {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease;
+  }
+  .preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .preview-heading {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.01em;
+  }
+  .preview-heading .count {
+    font-family: 'JetBrains Mono', monospace;
+    color: #a5b4fc;
+    margin-left: 10px;
+    font-size: 18px;
+  }
+  .preview-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  .preview-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 20px 22px;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .preview-card:hover {
+    border-color: rgba(129, 140, 248, 0.35);
+    background: linear-gradient(145deg, rgba(129, 140, 248, 0.05) 0%, rgba(236, 72, 153, 0.03) 100%);
+    transform: translateY(-2px);
+  }
+  .preview-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+  .preview-card-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .preview-card-num strong {
+    color: #a5b4fc;
+    font-size: 13px;
+  }
+  .preview-card .card-tag {
+    margin-bottom: 0;
+    padding: 3px 10px;
+    font-size: 10px;
+  }
+  .preview-card-text {
+    font-size: 14px;
+    line-height: 1.55;
+    color: rgba(255,255,255,0.9);
+    font-weight: 400;
+    word-break: keep-all;
+  }
+  .preview-back {
+    margin-top: 36px;
+    text-align: center;
+  }
+
+  /* Preview mode — enable scrolling */
+  body.preview-open {
+    overflow: auto;
+  }
+  body.preview-open main {
+    align-items: flex-start;
+    padding-top: 32px;
+    padding-bottom: 48px;
+  }
+
+  @media (max-width: 860px) {
+    .preview-grid { grid-template-columns: 1fr; }
+  }
 
   /* Question card */
   .card {
@@ -479,7 +581,10 @@
     <div class="start-screen" id="start-screen">
       <h1>CTO 마이클님의 귀환을<br><span class="accent">진심으로 환영합니다.</span></h1>
       <p>PM그룹원 19명이 익명으로 보낸 질문이 준비되어 있습니다.<br>아래 버튼을 눌러 시작해주세요.</p>
-      <button class="btn-primary btn-start" onclick="start()">시작하기 →</button>
+      <div class="start-actions">
+        <button class="btn-primary btn-start" onclick="start()">시작하기 →</button>
+        <button class="btn-ghost btn-start" onclick="openPreview()">전체 질문 보기</button>
+      </div>
     </div>
   </div>
 </main>
@@ -527,6 +632,8 @@ let doneIds = [];
 let currentQuestion = null;
 let rolling = false;
 let started = false;
+let previewMode = false;
+let previewIndex = 0;
 
 function revealMainTitle() {
   if (started) return;
@@ -553,8 +660,56 @@ function start() {
   pool = [...QUESTIONS];
   doneIds = [];
   counterDone.textContent = 0;
+  previewMode = false;
   revealMainTitle();
   pickNext();
+}
+
+function openPreview() {
+  previewMode = true;
+  document.body.classList.add('preview-open');
+  renderPreview();
+}
+
+function renderPreview() {
+  const cardsHTML = QUESTIONS.map(q => `
+    <div class="preview-card">
+      <div class="preview-card-head">
+        <div class="preview-card-num">Q <strong>#${String(q.id).padStart(2, '0')}</strong></div>
+        <div class="card-tag tag-${q.cat}">${q.tag}</div>
+      </div>
+      <div class="preview-card-text">${q.text}</div>
+    </div>
+  `).join('');
+
+  stage.innerHTML = `
+    <div class="preview-wrap">
+      <div class="preview-header">
+        <div class="preview-heading">전체 질문<span class="count">${QUESTIONS.length}개</span></div>
+        <button class="btn-ghost" onclick="backToWelcome()">← 처음 화면으로</button>
+      </div>
+      <div class="preview-grid">${cardsHTML}</div>
+      <div class="preview-back">
+        <button class="btn-ghost" onclick="backToWelcome()">← 처음 화면으로</button>
+      </div>
+    </div>
+  `;
+  window.scrollTo({ top: 0, behavior: 'instant' });
+}
+
+function backToWelcome() {
+  previewMode = false;
+  document.body.classList.remove('preview-open');
+  stage.innerHTML = `
+    <div class="start-screen" id="start-screen">
+      <h1>CTO 마이클님의 귀환을<br><span class="accent">진심으로 환영합니다.</span></h1>
+      <p>PM그룹원 19명이 익명으로 보낸 질문이 준비되어 있습니다.<br>아래 버튼을 눌러 시작해주세요.</p>
+      <div class="start-actions">
+        <button class="btn-primary btn-start" onclick="start()">시작하기 →</button>
+        <button class="btn-ghost btn-start" onclick="openPreview()">전체 질문 보기</button>
+      </div>
+    </div>
+  `;
 }
 
 function pickNext() {
@@ -679,6 +834,10 @@ function renderFinished() {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+  if (previewMode) {
+    if (e.key === 'Escape') backToWelcome();
+    return;
+  }
   if (e.code === 'Space') { e.preventDefault(); if (!rolling && currentQuestion) next(); else if (pool.length === 0 && !currentQuestion) start(); }
   if (e.key.toLowerCase() === 's' && !rolling && currentQuestion) skip();
 });
